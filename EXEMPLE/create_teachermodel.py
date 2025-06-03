@@ -24,7 +24,3 @@ features_filename = 'sample_features.csv'
 X_df.to_csv(features_filename, index=False)
 print(f"Fichier de features CSV sauvegardé sous : {features_filename}")
 
-# (Optionnel) Sauvegarder les données complètes si vous voulez vérifier les prédictions
-# full_data_df = X_df.copy()
-# full_data_df['target'] = y_data
-# full_data_df.to_csv('sample_full_data.csv', index=False)
