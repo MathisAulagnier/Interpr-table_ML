@@ -173,7 +173,7 @@ Cette approche de modèle de substitution global se distingue des explications l
 
 \quad Le cœur de notre solution est une application développée en langage Python. Ce choix est motivé par son écosystème riche en bibliothèques de science des données. Pour l'interface utilisateur, nous avons opté pour le framework Streamlit. Ce dernier permet de construire des interfaces web dynamiques et réactives avec une grande simplicité. Il est particulièrement adapté aux projets de prototypage rapide et de visualisation de données.
 
-La manipulation des données est assurée par la bibliothèque Pandas. Elle offre des structures de données performantes et des outils d'analyse puissants. Pour les aspects liés au machine learning, nous nous appuyons sur Scikit-learn. Cette bibliothèque constitue la référence pour l'implémentation de modèles classiques, y compris les arbres de décision que nous utilisons comme modèles étudiants. Le chargement des modèles pré-entraînés soumis par l'utilisateur est géré par la bibliothèque Joblib, optimisée pour la sérialisation des objets Python volumineux, notamment les modèles Scikit-learn. Enfin, la visualisation graphique de l'arbre de décision est réalisée grâce à Matplotlib.
+La manipulation des données est assurée par la bibliothèque Pandas. Elle offre des structures de données performantes et des outils d'analyse puissants. Pour les aspects liés au machine learning, nous nous appuyons sur Scikit-learn. Cette bibliothèque constitue la référence pour l'implémentation de modèles classiques, y compris les arbres de décision. Le chargement des modèles pré-entraînés soumis par l'utilisateur est géré par la bibliothèque Joblib, optimisée pour la sérialisation des objets Python volumineux, notamment les modèles Scikit-learn. Enfin, la visualisation graphique de l'arbre de décision est réalisée grâce à Matplotlib.
 
 \subsection{Le Processus de Distillation Étape par Étape}
 
@@ -232,17 +232,139 @@ Le principal résultat est la visualisation de l'arbre de décision lui-même. L
 
 \clearpage
 
+\section{Résultats : Analyse de Biais sur le Dataset COMPAS}
+
+\quad Afin de tester notre application et de pousser plus loin notre réflexion sur les biais des modèles boîte noire, nous avons mené une étude de cas sur le célèbre dataset COMPAS. L'objectif est de visualiser si un modèle entraîné sur ces données présente des disparités de traitement entre différentes ethnies, et si notre approche par modèle surrogat permet de mettre en évidence ces biais.
+
+\subsection{Présentation Statistique du Dataset}
+
+\quad Le jeu de données COMPAS contient des informations sur des milliers de prévenus en Floride et a été au cœur de débats sur l'équité algorithmique. Avant d'analyser les modèles, il est essentiel de comprendre la composition de ce dataset.
+
+\begin{figure}[h!]
+    \centering
+    \begin{subfigure}[b]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{plot_age.png}
+        \caption{Distribution de l'âge des prévenus.}
+        \label{fig:age_distribution}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{plot_sexe.png}
+        \caption{Répartition des cas par sexe et catégorie d'âge.}
+        \label{fig:sex_age_distribution}
+    \end{subfigure}
+    \caption{Statistiques démographiques du dataset COMPAS.}
+\end{figure}
+
+\quad L'histogramme de l'âge (Figure \ref{fig:age_distribution}) montre une population majoritairement jeune, avec une fréquence maximale de prévenus se situant entre 20 et 30 ans. La répartition par sexe et âge (Figure \ref{fig:sex_age_distribution}) révèle une prédominance masculine dans toutes les tranches d'âge, particulièrement dans la catégorie des 25-45 ans, qui représente 45,5\% des hommes contre 11,1\% des femmes.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.57\textwidth]{plot_ethnie.png}
+    \caption{Distribution des différents groupes ethniques dans le dataset.}
+    \label{fig:race_distribution}
+\end{figure}
+
+
+\quad La Figure \ref{fig:race_distribution} illustre la répartition ethnique au sein du dataset. On observe une disparité notable : les prévenus afro-américains constituent le groupe le plus important avec 53,46\% des cas, suivis par les Caucasiens (33,23\%). Les autres groupes (Hispaniques, Asiatiques, Amérindiens et autres) sont nettement moins représentés.
+
+\quad Il est crucial de noter que ces proportions reflètent la population carcérale d'une région spécifique des États-Unis et ne sauraient être généralisées. En France, par exemple, la collecte de données ethniques est interdite par la loi, ce qui rendrait une telle analyse impossible et souligne les différences de contexte légal et social. Cette forte disproportion dans les données d'entraînement constitue un risque majeur de voir les modèles développer des biais, en associant à tort l'ethnicité au risque de récidive.
+
+\subsection{Analyse des Biais via le Modèle Surrogat}
+
+\quad Après avoir entraîné deux modèles de classification complexes (un Gradient Boosting Classifier et un Perceptron Multicouche) pour prédire le score de risque (`score\_text`) sur le dataset COMPAS, nous les avons soumis à notre application. L'entraînement a été volontairement naïf, avec un prétraitement minimal, en utilisant les features `age`, `c\_charge\_degree`, `race`, `sex`, `priors\_count`, et `days\_b\_screening\_arrest`. L'objectif est de voir si notre approche par modèle surrogat (un arbre de décision) peut mettre en évidence des biais dans la logique de ces boîtes noires.
+
+\quad Notre première analyse consiste à générer un arbre de décision pour approximer notre modèle boîte noire en incluant toutes les features. Avec une profondeur limitée à 4 niveaux, nous obtenons une fidélité de \textbf{86\%} par rapport au modèle professeur. Comme le montre la Figure \ref{fig:tree_lvl4}, à ce niveau d'interprétation, le modèle surrogat base principalement ses décisions sur le nombre d'antécédents judiciaires (`priors\_count`) et l'âge (`age`). Jusqu'à cette profondeur, le facteur ethnique n'apparaît pas comme un critère de décision, suggérant que le raisonnement principal du modèle n'est pas directement raciste.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=\textwidth]{tree_with_lvl4.png}
+    \caption{Arbre de décision surrogat (profondeur 4) avec une fidélité de 86\%. Les décisions principales reposent sur `priors\_count` et `age`.}
+    \label{fig:tree_lvl4}
+\end{figure}
+
+\quad Cependant, un compromis existe entre la fidélité et la simplicité. En cherchant à augmenter la fidélité de notre approximation, nous avons augmenté la profondeur de l'arbre. En passant à une profondeur de 5, la fidélité monte à \textbf{89\%}, mais des variables démographiques commencent à apparaître dans les décisions. Ce phénomène est problématique, car il montre que pour coller plus fidèlement à la logique de la boîte noire, le modèle simple doit commencer à intégrer des facteurs potentiellement biaisés.
+
+\quad Pour pousser l'analyse plus loin, nous avons mené une seconde expérience en retirant la variable la plus prédictive, `priors\_count`, et en ré-entraînant les modèles. Le résultat, visible sur la Figure \ref{fig:tree\_without\_prior}, est sans équivoque. Privé de son indicateur principal, le modèle surrogat utilise maintenant la variable `race\_African-American` dès le deuxième niveau de l'arbre. Ce comportement est très probablement dû au fort déséquilibre du jeu de données. Pour maximiser ses chances de prédire correctement, le modèle se base sur la majorité statistique, associant ainsi l'ethnie au risque.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=\textwidth]{tree_withoutprior.png}
+    \caption{Arbre de décision surrogat sans la feature `priors\_count`. L'ethnie (`race\_African-American`) devient un critère de décision de haut niveau.}
+    \label{fig:tree\_without\_prior}
+\end{figure}
+
+\quad Cela prouve-t-il que le modèle est intrinsèquement raciste ? Pour le vérifier, nous avons mené un test final : ré-entraîner les modèles boîte noire originaux (Gradient Boosting et MLP) sur le jeu de données complet, mais en excluant totalement la feature `race`. De manière surprenante, les performances (accuracy, précision, rappel) de ces modèles sont restées identiques.
+
+\quad Cette dernière étape nous amène à une conclusion nuancée. Bien que le modèle puisse s'appuyer sur des biais ethniques lorsque des données plus pertinentes sont absentes ou lorsqu'on le pousse à une fidélité extrême, le facteur `race` semble être décorrélé de sa performance globale. Le modèle n'a pas besoin de l'ethnie pour effectuer ses prédictions ; il l'utilise comme un proxy statistique lorsque cela est commode. Notre outil permet donc non seulement de détecter un biais potentiel, mais aussi d'évaluer sa réelle importance dans la logique du modèle, offrant ainsi une vision plus juste et approfondie que la simple accusation de "biais raciste".
+
+
+\clearpage
+
 \section{Sources}
-A voir plus tard comment les mettre au propre dans le rapport final
-https://fr.wikipedia.org/wiki/Bo%C3%AEte_noire_(syst%C3%A8me)
-https://www.nature.com/articles/s42256-021-00338-7
-https://www.sciencedirect.com/science/article/pii/S0933365723001732
-https://www.mdpi.com/2078-2489/14/8/426
-https://truera.com/ai-quality-education/ai-regulation/cfpb-circular-on-black-box-credit-models-five-considerations-for-lenders
-https://link.springer.com/article/10.1007/s12559-023-10179-8
-https://www.mdpi.com/2673-2688/4/2/23
-https://www.sciencedirect.com/science/article/abs/pii/S0925231224007409
-https://rbcborealis.com/research-blogs/explainability-ii-global-explanations-proxy-models-and-interpretable-models/
-https://rbcborealis.com/research-blogs/explainability-ii-global-explanations-proxy-models-and-interpretable-models/
+
+\subsection*{Concepts Généraux et Enjeux de l'Interprétabilité}
+
+\begin{itemize}
+    \item \textbf{Définition de la Boîte Noire :} Article Wikipedia fournissant la définition historique et systémique du concept de boîte noire, tel que mentionné dans notre introduction. \\
+    \href{https://fr.wikipedia.org/wiki/Boîte_noire_(système)}{[Lien vers l'article]}
+
+    \item \textbf{Le Plaidoyer pour des Modèles Interprétables :} Un article fondamental de Cynthia Rudin argumentant pourquoi, dans les domaines à forts enjeux, il est préférable d'utiliser des modèles directement interprétables plutôt que de tenter d'expliquer des boîtes noires. Cette source appuie notre mention de ses travaux. \\
+    \href{https://www.nature.com/articles/s42256-019-0133-z}{[Lien vers l'article de Nature Machine Intelligence]}
+
+    \item \textbf{Revues Générales sur l'IA Explicable (XAI) :} Une sélection d'articles de recherche qui dressent un état de l'art complet des méthodes et des défis de l'IA explicable.
+    \begin{itemize}
+        \item \textit{A Survey on Explainable AI (XAI): Toward Responsible AI} (MDPI, 2023) \\
+        \href{https://www.mdpi.com/2078-2489/14/8/426}{[Lien vers l'article]}
+        \item \textit{A survey of explainable artificial intelligence: A machine learning perspective} (Springer, 2023) \\
+        \href{https://link.springer.com/article/10.1007/s12559-023-10179-8}{[Lien vers l'article]}
+    \end{itemize}
+\end{itemize}
+
+\subsection*{Études de Cas sur les Domaines Critiques}
+
+\begin{itemize}
+    \item \textbf{Justice et le Scandale COMPAS :} L'enquête originelle de ProPublica, "Machine Bias", qui a révélé les biais raciaux de l'algorithme COMPAS et a été une source d'inspiration centrale pour ce projet. \\
+    \href{https://www.propublica.org/article/machine-bias-risk-assessments-in-criminal-sentencing}{[Lien vers l'article de ProPublica]}
+
+    \item \textbf{Santé et IA Médicale :} Deux articles qui illustrent les défis du déploiement de l'IA en milieu clinique, soulignant la nécessité de l'interprétabilité pour la confiance et la détection d'erreurs (comme le cas des IA pour le COVID-19).
+    \begin{itemize}
+        \item \textit{Deploying trustworthy AI in clinical practice requires more than just high-quality data} (Nature, 2021) \\
+        \href{https://www.nature.com/articles/s42256-021-00338-7}{[Lien vers l'article]}
+        \item \textit{Explainable artificial intelligence (XAI) in healthcare: A scoping review} (ScienceDirect, 2023) \\
+        \href{https://www.sciencedirect.com/science/article/pii/S0933365723001732}{[Lien vers l'article]}
+    \end{itemize}
+
+    \item \textbf{Finance et Réglementation :} Sources concernant l'obligation d'expliquer les décisions algorithmiques dans le secteur financier, notamment la circulaire du CFPB américain.
+    \begin{itemize}
+        \item \textit{CFPB Circular on Black-Box Credit Models} (Truera, 2022) \\
+        \href{https://truera.com/ai-quality-education/ai-regulation/cfpb-circular-on-black-box-credit-models-five-considerations-for-lenders}{[Lien vers l'article]}
+        \item \textit{Explainable Artificial Intelligence (XAI) in the Financial Industry—A Scoping Review} (MDPI, 2023) \\
+        \href{https://www.mdpi.com/2673-2688/4/2/23}{[Lien vers l'article]}
+    \end{itemize}
+
+    \item \textbf{Défense et le programme XAI de la DARPA :} La page officielle du programme XAI (Explainable Artificial Intelligence) de la DARPA, qui a financé la recherche pour rendre les systèmes militaires d'IA moins opaques. \\
+    \href{https://www.darpa.mil/program/explainable-artificial-intelligence}{[Lien vers le site de la DARPA]}
+\end{itemize}
+
+\subsection*{Méthodes d'Interprétabilité (Post-Hoc et Surrogat)}
+
+\begin{itemize}
+    \item \textbf{Modèles Surrogats (Proxy Models) :} Un article de blog de RBC Borealis qui explique clairement le concept de modèle surrogat global, au cœur de notre application. \\
+    \href{https://rbcborealis.com/research-blogs/explainability-ii-global-explanations-proxy-models-and-interpretable-models/}{[Lien vers l'article de RBC Borealis]}
+
+    \item \textbf{Méthodes Post-Hoc (LIME et SHAP) :} Les publications scientifiques originales présentant les méthodes LIME et SHAP, les deux approches post-hoc les plus influentes citées dans notre état de l'art.
+    \begin{itemize}
+        \item \textit{LIME: "Why Should I Trust You?": Explaining the Predictions of Any Classifier} (Ribeiro, Singh, Guestrin, 2016) \\
+        \href{https://arxiv.org/abs/1602.04938}{[Lien vers l'article sur arXiv]}
+        \item \textit{SHAP: A Unified Approach to Interpreting Model Predictions} (Lundberg, Lee, 2017) \\
+        \href{https://arxiv.org/abs/1705.07874}{[Lien vers l'article sur arXiv]}
+    \end{itemize}
+
+    \item \textbf{Approches Techniques des Modèles Surrogats :} Un article de recherche plus technique sur une méthode post-hoc basée sur un modèle surrogat et la théorie des jeux. \\
+    \href{https://www.sciencedirect.com/science/article/abs/pii/S0925231224007409}{[Lien vers l'article de ScienceDirect]}
+\end{itemize}
 
 \end{document}
