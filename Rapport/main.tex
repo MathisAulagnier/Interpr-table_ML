@@ -285,20 +285,24 @@ Le principal résultat est la visualisation de l'arbre de décision lui-même. L
     \label{fig:tree_lvl4}
 \end{figure}
 
+\clearpage
+
 \quad Cependant, un compromis existe entre la fidélité et la simplicité. En cherchant à augmenter la fidélité de notre approximation, nous avons augmenté la profondeur de l'arbre. En passant à une profondeur de 5, la fidélité monte à \textbf{89\%}, mais des variables démographiques commencent à apparaître dans les décisions. Ce phénomène est problématique, car il montre que pour coller plus fidèlement à la logique de la boîte noire, le modèle simple doit commencer à intégrer des facteurs potentiellement biaisés.
 
-\quad Pour pousser l'analyse plus loin, nous avons mené une seconde expérience en retirant la variable la plus prédictive, `priors\_count`, et en ré-entraînant les modèles. Le résultat, visible sur la Figure \ref{fig:tree\_without\_prior}, est sans équivoque. Privé de son indicateur principal, le modèle surrogat utilise maintenant la variable `race\_African-American` dès le deuxième niveau de l'arbre. Ce comportement est très probablement dû au fort déséquilibre du jeu de données. Pour maximiser ses chances de prédire correctement, le modèle se base sur la majorité statistique, associant ainsi l'ethnie au risque.
+\quad Pour pousser l'analyse plus loin, nous avons mené une seconde expérience en retirant la variable la plus prédictive, `priors\_count`, et en ré-entraînant les modèles. Le résultat, visible sur la Figure \ref{fig:tree_without_prior}, est sans équivoque. Privé de son indicateur principal, le modèle surrogat utilise maintenant les variables ethniques comme `race\_African-American` dès le deuxième niveau de l'arbre. Ce comportement est très probablement dû au fort déséquilibre du jeu de données. Pour maximiser ses chances de prédire correctement, le modèle se base sur la majorité statistique, associant ainsi l'ethnie au risque.
 
 \begin{figure}[h!]
     \centering
     \includegraphics[width=\textwidth]{tree_withoutprior.png}
     \caption{Arbre de décision surrogat sans la feature `priors\_count`. L'ethnie (`race\_African-American`) devient un critère de décision de haut niveau.}
-    \label{fig:tree\_without\_prior}
+    \label{fig:tree_without_prior}
 \end{figure}
 
 \quad Cela prouve-t-il que le modèle est intrinsèquement raciste ? Pour le vérifier, nous avons mené un test final : ré-entraîner les modèles boîte noire originaux (Gradient Boosting et MLP) sur le jeu de données complet, mais en excluant totalement la feature `race`. De manière surprenante, les performances (accuracy, précision, rappel) de ces modèles sont restées identiques.
 
-\quad Cette dernière étape nous amène à une conclusion nuancée. Bien que le modèle puisse s'appuyer sur des biais ethniques lorsque des données plus pertinentes sont absentes ou lorsqu'on le pousse à une fidélité extrême, le facteur `race` semble être décorrélé de sa performance globale. Le modèle n'a pas besoin de l'ethnie pour effectuer ses prédictions ; il l'utilise comme un proxy statistique lorsque cela est commode. Notre outil permet donc non seulement de détecter un biais potentiel, mais aussi d'évaluer sa réelle importance dans la logique du modèle, offrant ainsi une vision plus juste et approfondie que la simple accusation de "biais raciste".
+\quad Cette dernière étape nous amène à une conclusion nuancée. Bien que le modèle puisse s'appuyer sur des biais ethniques lorsque des données plus pertinentes sont absentes ou lorsqu'on le pousse à une fidélité extrême, le facteur `race` semble être décorrélé de sa performance globale. Le modèle n'a pas besoin de l'ethnie pour effectuer ses prédictions. Le modèle n'a pas établi de lien de cause à effet, mais a détecté que cette information est statistiquement liée au résultat. Il l'utilise donc comme un substitut pratique pour prendre sa décision, surtout en l'absence de données plus directes. 
+
+Notre outil permet donc non seulement de détecter un biais potentiel, mais aussi d'évaluer sa réelle importance dans la logique du modèle, offrant ainsi une vision plus juste et approfondie que la simple accusation de "biais raciste".
 
 
 \clearpage
