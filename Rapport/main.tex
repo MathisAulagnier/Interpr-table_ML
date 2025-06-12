@@ -150,68 +150,66 @@ Cette approche de modèle de substitution global se distingue des explications l
 
 \section{Conception et Modélisation de l'Application}
 
-\quad La mise en œuvre de notre projet s'articule autour d'une application web interactive. Celle-ci a pour vocation de traduire les principes théoriques de l'interprétabilité en un outil fonctionnel. L'objectif est de permettre à un utilisateur de soumettre un modèle prédictif opaque, qualifié de boîte noire, et d'obtenir en retour un modèle de substitution (surrogat) simple et intelligible. Cette section détaille l'architecture logicielle retenue et la logique de modélisation qui orchestre le processus de distillation des connaissances.
+\quad La mise en œuvre de notre projet s'articule autour d'une application web interactive qui a pour vocation de traduire les principes théoriques de l'interprétabilité en un outil fonctionnel. L'objectif est de permettre à un utilisateur de soumettre un modèle prédictif opaque, qualifié de boîte noire, et d'obtenir en retour un modèle de substitution (surrogat) simple et intelligible. Cette section détaille l'architecture logicielle retenue et la logique de modélisation qui orchestre le processus de distillation des connaissances.
 
 \subsection{Architecture Générale et Technologies}
 
-\quad Le cœur de notre solution est une application développée en langage Python. Ce choix est motivé par son écosystème riche en bibliothèques de science des données. Pour l'interface utilisateur, nous avons opté pour le framework Streamlit. Ce dernier permet de construire des interfaces web dynamiques et réactives avec une grande simplicité. Il est particulièrement adapté aux projets de prototypage rapide et de visualisation de données.\\
+\quad Le cœur de notre solution est une application développée en langage Python. Ce choix est motivé par son écosystème riche en bibliothèques de science des données. Pour l'interface utilisateur, nous avons opté pour le framework Streamlit, qui permet de construire des interfaces web dynamiques et réactives avec une grande simplicité. Il est particulièrement adapté aux projets de prototypage rapide et de visualisation de données.\\
 
-La manipulation des données est assurée par la bibliothèque Pandas. Elle offre des structures de données performantes et des outils d'analyse puissants. Pour les aspects liés au machine learning, nous nous appuyons sur Scikit-learn. Cette bibliothèque constitue la référence pour l'implémentation de modèles classiques, y compris les arbres de décision. Le chargement des modèles pré-entraînés soumis par l'utilisateur est géré par la bibliothèque Joblib, optimisée pour la sérialisation des objets Python volumineux, notamment les modèles Scikit-learn. Enfin, la visualisation graphique de l'arbre de décision est réalisée grâce à Matplotlib.
+La manipulation des données est assurée par la bibliothèque Pandas, qui offre des structures de données performantes et des outils d'analyse puissants. Pour les aspects liés au machine learning, nous nous appuyons sur Scikit-learn. Cette bibliothèque constitue la référence pour l'implémentation de modèles classiques, y compris les arbres de décision. Le chargement des modèles pré-entraînés soumis par l'utilisateur est géré par la bibliothèque Joblib, optimisée pour la sérialisation des objets Python volumineux, notamment les modèles Scikit-learn. Enfin, la visualisation graphique de l'arbre de décision est réalisée grâce à Matplotlib.
 
 \subsection{Le Processus de Distillation Étape par Étape}
 
-\quad Notre application implémente une chaîne de traitement séquentielle. Chaque étape a été conçue pour guider l'utilisateur à travers le processus de distillation. La logique se décompose en trois phases principales : le chargement des artefacts, l'entraînement du modèle surrogat, et la restitution des résultats interprétables.
+\quad Notre application implémente une chaîne de traitement séquentielle où chaque étape a été conçue pour guider l'utilisateur à travers le processus de distillation. La logique se décompose en trois phases principales : le chargement des artefacts, l'entraînement du modèle surrogat, et la restitution des résultats interprétables.
 
-\subsubsection{Étape 1 : Soumission du Modèle Professeur et des Données}
+    \subsubsection{Étape 1 : Soumission du Modèle Professeur et des Données}
 
-\quad Le point d'entrée de l'application est une interface sobre. Elle invite l'utilisateur à fournir deux fichiers distincts. Le premier est le modèle boîte noire, que nous nommons le "modèle professeur". Nous faisons l'hypothèse qu'il s'agit d'un modèle scikit-learn entraîné et sauvegardé au format `.joblib`. Le second fichier est un jeu de données au format `.csv`. Ce dernier doit contenir les observations sur lesquelles l'utilisateur souhaite obtenir une explication du comportement du modèle professeur. Une contrainte importante est que ces données doivent être déjà prétraitées, de la même manière que les données utilisées pour l'entraînement initial de la boîte noire.
+    \quad Le point d'entrée de l'application est une interface sobre qui invite l'utilisateur à fournir deux fichiers distincts. Le premier est le modèle boîte noire, que nous nommons le "modèle professeur". Nous faisons l'hypothèse qu'il s'agit d'un modèle scikit-learn entraîné et sauvegardé au format `.joblib`. Le second fichier est un jeu de données au format `.csv`. Ce dernier doit contenir les observations sur lesquelles l'utilisateur souhaite obtenir une explication du comportement du modèle professeur. Une contrainte importante est que ces données doivent être déjà prétraitées, de la même manière que les données utilisées pour l'entraînement initial de la boîte noire.
+    
+    \begin{figure}[h]
+        \centering
+        \includegraphics[width=0.5\textwidth]{app_start.png}
+        \caption{Interface principale de notre application. On y distingue clairement les deux zones de téléversement destinées à recevoir le modèle boîte noire (.joblib) et le fichier de données (.csv).}
+        \label{fig:upload_interface}
+    \end{figure}
 
-\begin{figure}[h]
-    \centering
-    \includegraphics[width=0.5\textwidth]{app_start.png}
-    \caption{Interface principale de notre application. On y distingue clairement les deux zones de téléversement destinées à recevoir le modèle boîte noire (.joblib) et le fichier de données (.csv).}
-    \label{fig:upload_interface}
-\end{figure}
-
-
-
-\subsubsection{Étape 2 : Entraînement du Modèle Étudiant par Distillation}
-
-\quad Une fois les deux fichiers chargés, le processus de modélisation débute. L'application charge en mémoire le modèle professeur. Elle utilise ensuite ce modèle pour effectuer des prédictions sur l'intégralité du jeu de données fourni par l'utilisateur. Les prédictions ainsi générées deviennent la vérité de terrain pour notre modèle étudiant. Ces étiquettes, produites par la boîte noire, sont souvent appelées "pseudo-étiquettes".\\
-
-L'étape suivante est la distillation à proprement parler. Un nouveau modèle, simple et interprétable, est instancié. Dans notre cas, il s'agit d'un arbre de décision (`DecisionTreeClassifier` de Scikit-learn). Ce modèle "étudiant" est alors entraîné. Il utilise les features originales du fichier CSV comme variables explicatives (X) et les pseudo-étiquettes du modèle professeur comme variable cible (y). L'utilisateur peut contrôler la complexité de cet arbre, notamment via un curseur permettant d'ajuster sa profondeur maximale. Cet hyperparamètre est crucial car il gouverne le compromis entre la fidélité du modèle étudiant et son intelligibilité.
-
-\begin{figure}[h!]
-    \centering
-    \includegraphics[width=0.5\textwidth]{app_lateral.png}
-    \caption{Panneau de configuration latéral offrant la possibilité d'ajuster les hyperparamètres du modèle étudiant.}
-    \label{fig:config_panel}
-\end{figure}
+    \subsubsection{Étape 2 : Entraînement du Modèle Étudiant par Distillation}
+    
+    \quad Une fois les deux fichiers chargés, le processus de modélisation débute. L'application charge en mémoire le modèle professeur puis utilise ensuite ce modèle pour effectuer des prédictions sur l'intégralité du jeu de données fourni par l'utilisateur. Les prédictions ainsi générées deviennent la vérité de terrain pour notre modèle étudiant. Ces étiquettes, produites par la boîte noire, sont souvent appelées "pseudo-étiquettes".\\
+    
+    L'étape suivante est la distillation à proprement parler : un nouveau modèle, simple et interprétable, est instancié. Dans notre cas, il s'agit d'un arbre de décision (`DecisionTreeClassifier` de Scikit-learn). Ce modèle "étudiant" est alors entraîné. Il utilise les features originales du fichier CSV comme variables explicatives (X) et les pseudo-étiquettes du modèle professeur comme variable cible (y). L'utilisateur peut contrôler la complexité de cet arbre, notamment via un curseur permettant d'ajuster sa profondeur maximale. Cet hyperparamètre est crucial car il gouverne le compromis entre la fidélité du modèle étudiant et son intelligibilité.
+    
+    \begin{figure}[h!]
+        \centering
+        \includegraphics[width=0.5\textwidth]{app_lateral.png}
+        \caption{Panneau de configuration latéral offrant la possibilité d'ajuster les hyperparamètres du modèle étudiant.}
+        \label{fig:config_panel}
+    \end{figure}
 
 \clearpage
 
-\subsubsection{Étape 3 : Évaluation de la Fidélité et Restitution des Résultats}
-
-\quad La phase finale consiste à évaluer la qualité du modèle étudiant et à présenter les résultats de manière claire. La performance du modèle surrogat n'est pas mesurée par rapport aux véritables étiquettes (qui ne sont pas forcément disponibles), mais par sa capacité à mimer le modèle professeur. Cette métrique est appelée la "fidélité". Nous la calculons comme le score d'accuracy entre les prédictions du modèle étudiant et les prédictions du modèle professeur. Un score de fidélité élevé indique que l'arbre de décision est une bonne approximation de la boîte noire sur les données fournies.\\
-
-Le principal résultat est la visualisation de l'arbre de décision lui-même. L'application génère un graphique représentant la structure complète de l'arbre. Chaque nœud affiche la condition de séparation, le nombre d'échantillons concernés et la classe majoritaire. Ce graphique constitue l'explication globale du comportement du modèle professeur. Il permet à un humain de suivre le cheminement logique qui mène à une décision, rendant ainsi le processus transparent.
-
-\begin{figure}[h!]
-    \centering
-    \begin{minipage}[b]{0.48\textwidth}
+    \subsubsection{Étape 3 : Évaluation de la Fidélité et Restitution des Résultats}
+    
+    \quad La phase finale consiste à évaluer la qualité du modèle étudiant et à présenter les résultats de manière claire. La performance du modèle surrogat n'est pas mesurée par rapport aux véritables étiquettes (qui ne sont pas forcément disponibles), mais par sa capacité à mimer le modèle professeur. Cette métrique est appelée la "fidélité". Nous la calculons comme le score d'accuracy classique, mais cette fois-ci entre les prédictions du modèle étudiant et les prédictions du modèle professeur. Un score de fidélité élevé indique donc que l'arbre de décision est une bonne approximation de la boîte noire sur les données fournies.\\
+    
+    Le résultat principal est la visualisation de l'arbre de décision lui-même : l'application génère un graphique représentant la structure complète de l'arbre. Chaque nœud affiche la condition de séparation, le nombre d'échantillons concernés et la classe majoritaire. Ce graphique constitue une explication globale du comportement du modèle professeur. Il permet à un humain de suivre le cheminement logique qui mène à une décision, rendant ainsi le processus transparent.
+    
+    \begin{figure}[h!]
         \centering
-        \includegraphics[width=\textwidth]{app_fidelity.png}
-        \caption{Écran de résultats de l'application: affichage de la fidélité du modèle}
-        \label{fig:results_view}
-    \end{minipage}
-    \hfill
-    \begin{minipage}[b]{0.48\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{app_tree.png}
-        \caption{Écran de résultats de l'application: affichage de l'arbre de décision surrogat.}
-        \label{fig:input_view}
-    \end{minipage}
-\end{figure}
+        \begin{minipage}[b]{0.48\textwidth}
+            \centering
+            \includegraphics[width=\textwidth]{app_fidelity.png}
+            \caption{Écran de résultats de l'application: affichage de la fidélité du modèle}
+            \label{fig:results_view}
+        \end{minipage}
+        \hfill
+        \begin{minipage}[b]{0.48\textwidth}
+            \centering
+            \includegraphics[width=\textwidth]{app_tree.png}
+            \caption{Écran de résultats de l'application: affichage de l'arbre de décision surrogat.}
+            \label{fig:input_view}
+        \end{minipage}
+    \end{figure}
 
 \clearpage
 
@@ -241,7 +239,7 @@ Le principal résultat est la visualisation de l'arbre de décision lui-même. L
     \caption{Statistiques démographiques du dataset COMPAS.}
 \end{figure}
 
-\quad L'histogramme de l'âge (Figure \ref{fig:age_distribution}) montre une population majoritairement jeune, avec une fréquence maximale de prévenus se situant entre 20 et 30 ans. La répartition par sexe et âge (Figure \ref{fig:sex_age_distribution}) révèle une prédominance masculine dans toutes les tranches d'âge, particulièrement dans la catégorie des 25-45 ans, qui représente 45,5\% des hommes contre 11,1\% des femmes.
+\quad L'histogramme de l'âge (Figure \ref{fig:age_distribution}) montre une population majoritairement jeune, avec une fréquence maximale de prévenus se situant entre 20 et 30 ans. La répartition par sexe et âge (Figure \ref{fig:sex_age_distribution}) révèle une forte prédominance masculine dans toutes les tranches d'âge, particulièrement dans la catégorie des 25-45 ans, qui représente 45,5\% des hommes contre 11,1\% des femmes.
 
 \begin{figure}[h!]
     \centering
