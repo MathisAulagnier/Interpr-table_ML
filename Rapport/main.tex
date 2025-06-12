@@ -1,23 +1,12 @@
 \documentclass{article}
 
-\usepackage[utf8]{inputenc}
-\usepackage[hyphens]{url}
-\usepackage{amssymb}
-\usepackage{array}
-\usepackage{bm}
-\usepackage{booktabs}
 \usepackage{cmbright}
 \usepackage{fancyhdr}
 \usepackage{geometry}
-\usepackage{glossaries}
 \usepackage{graphicx}
 \usepackage{hyperref}
-\usepackage{lipsum} 
-\usepackage{listings}
-\usepackage{listingsutf8}
 \usepackage{subcaption}
 \usepackage{titling}
-\usepackage{xcolor}
 
 \geometry{
  a4paper,
@@ -25,42 +14,36 @@
  top=30mm,
 }
 
-\definecolor{backgray}{rgb}{0.95,0.95,0.95}
-\definecolor{codegreen}{rgb}{0,0.6,0}
-\definecolor{codeblue}{rgb}{0.2,0.2,0.7}
-\definecolor{codepurple}{rgb}{0.58,0,0.82}
-\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+\setlength{\headheight}{12.5pt}
 
 \title{Rapport du TP3 : Boîte Noires et Système Interprétable}
 \author{Mathis A., Ryan C., Samuel M.}
 \date{\today}
- 
-\fancypagestyle{plain}{%  the preset of fancyhdr 
-    \fancyhf{} % clear all header and footer fields
+
+\fancypagestyle{plain}{
+    \fancyhf{}
     \fancyfoot[L]{\thedate}
-    \fancyfoot[R]{\includegraphics[width=2cm]{UQAC_Logo.png}} % Logo et numéro de page en bas à droite
-    \fancyhead[L]{Agent intelligent avec Gymnasium}
+    \fancyfoot[R]{\includegraphics[width=2cm]{UQAC_Logo.png}}
+    \fancyhead[L]{Rapport du TP3}
     \fancyhead[R]{\theauthor}
 }
 
-% Appliquer le même style à toutes les pages
 \pagestyle{fancy}
     \fancyhead[L]{Rapport du TP3}
     \fancyhead[R]{\theauthor}
 \fancyfoot[L]{\thedate}
-\fancyfoot[R]{\includegraphics[width=2cm]{UQAC_Logo.png}} % Logo et numéro de page en bas à droite
+\fancyfoot[R]{\includegraphics[width=2cm]{UQAC_Logo.png}}
 
 \makeatletter
-\def\@maketitle{%
+\def\@maketitle{
   \newpage
   \null
-  \vskip 1em%
-  \begin{center}%
+  \vskip 1em
+  \begin{center}
   \let \footnote \thanks
-    {\LARGE \@title \par}%
-    \vskip 1em%
-    %{\large \@date}%
-  \end{center}%
+    {\LARGE \@title \par}
+    \vskip 1em
+  \end{center}
   \par
   \vskip 1em}
 \makeatother
@@ -163,15 +146,15 @@ Cette approche de modèle de substitution global se distingue des explications l
     
     Finalement, le dernier risque est un gain faible en interprétabilité : si le modèle de départ est trop complexe, le modèle extrait risque de l’être aussi si sa fidélité est élevée. On peut donc se retrouver avec d’immenses arbres de décision, et l’objectif d’interprétabilité est alors manqué. Trouver le bon équilibre n’est pas trivial et dépend de l’usage : pour un audit réglementaire, on peut tolérer un modèle explicatif un peu plus large, lu par des experts ; pour expliquer à un client, il faut quelques règles tout au plus. Dans tous les cas, cela nécessite un arbitrage et un jugement humain, ce qui ajoute une couche de complexité dans le processus de développement.
 
-
 \clearpage
+
 \section{Conception et Modélisation de l'Application}
 
 \quad La mise en œuvre de notre projet s'articule autour d'une application web interactive. Celle-ci a pour vocation de traduire les principes théoriques de l'interprétabilité en un outil fonctionnel. L'objectif est de permettre à un utilisateur de soumettre un modèle prédictif opaque, qualifié de boîte noire, et d'obtenir en retour un modèle de substitution (surrogat) simple et intelligible. Cette section détaille l'architecture logicielle retenue et la logique de modélisation qui orchestre le processus de distillation des connaissances.
 
 \subsection{Architecture Générale et Technologies}
 
-\quad Le cœur de notre solution est une application développée en langage Python. Ce choix est motivé par son écosystème riche en bibliothèques de science des données. Pour l'interface utilisateur, nous avons opté pour le framework Streamlit. Ce dernier permet de construire des interfaces web dynamiques et réactives avec une grande simplicité. Il est particulièrement adapté aux projets de prototypage rapide et de visualisation de données.
+\quad Le cœur de notre solution est une application développée en langage Python. Ce choix est motivé par son écosystème riche en bibliothèques de science des données. Pour l'interface utilisateur, nous avons opté pour le framework Streamlit. Ce dernier permet de construire des interfaces web dynamiques et réactives avec une grande simplicité. Il est particulièrement adapté aux projets de prototypage rapide et de visualisation de données.\\
 
 La manipulation des données est assurée par la bibliothèque Pandas. Elle offre des structures de données performantes et des outils d'analyse puissants. Pour les aspects liés au machine learning, nous nous appuyons sur Scikit-learn. Cette bibliothèque constitue la référence pour l'implémentation de modèles classiques, y compris les arbres de décision. Le chargement des modèles pré-entraînés soumis par l'utilisateur est géré par la bibliothèque Joblib, optimisée pour la sérialisation des objets Python volumineux, notamment les modèles Scikit-learn. Enfin, la visualisation graphique de l'arbre de décision est réalisée grâce à Matplotlib.
 
@@ -194,7 +177,7 @@ La manipulation des données est assurée par la bibliothèque Pandas. Elle offr
 
 \subsubsection{Étape 2 : Entraînement du Modèle Étudiant par Distillation}
 
-\quad Une fois les deux fichiers chargés, le processus de modélisation débute. L'application charge en mémoire le modèle professeur. Elle utilise ensuite ce modèle pour effectuer des prédictions sur l'intégralité du jeu de données fourni par l'utilisateur. Les prédictions ainsi générées deviennent la vérité de terrain pour notre modèle étudiant. Ces étiquettes, produites par la boîte noire, sont souvent appelées "pseudo-étiquettes".
+\quad Une fois les deux fichiers chargés, le processus de modélisation débute. L'application charge en mémoire le modèle professeur. Elle utilise ensuite ce modèle pour effectuer des prédictions sur l'intégralité du jeu de données fourni par l'utilisateur. Les prédictions ainsi générées deviennent la vérité de terrain pour notre modèle étudiant. Ces étiquettes, produites par la boîte noire, sont souvent appelées "pseudo-étiquettes".\\
 
 L'étape suivante est la distillation à proprement parler. Un nouveau modèle, simple et interprétable, est instancié. Dans notre cas, il s'agit d'un arbre de décision (`DecisionTreeClassifier` de Scikit-learn). Ce modèle "étudiant" est alors entraîné. Il utilise les features originales du fichier CSV comme variables explicatives (X) et les pseudo-étiquettes du modèle professeur comme variable cible (y). L'utilisateur peut contrôler la complexité de cet arbre, notamment via un curseur permettant d'ajuster sa profondeur maximale. Cet hyperparamètre est crucial car il gouverne le compromis entre la fidélité du modèle étudiant et son intelligibilité.
 
@@ -209,7 +192,7 @@ L'étape suivante est la distillation à proprement parler. Un nouveau modèle, 
 
 \subsubsection{Étape 3 : Évaluation de la Fidélité et Restitution des Résultats}
 
-\quad La phase finale consiste à évaluer la qualité du modèle étudiant et à présenter les résultats de manière claire. La performance du modèle surrogat n'est pas mesurée par rapport aux véritables étiquettes (qui ne sont pas forcément disponibles), mais par sa capacité à mimer le modèle professeur. Cette métrique est appelée la "fidélité". Nous la calculons comme le score d'accuracy entre les prédictions du modèle étudiant et les prédictions du modèle professeur. Un score de fidélité élevé indique que l'arbre de décision est une bonne approximation de la boîte noire sur les données fournies.
+\quad La phase finale consiste à évaluer la qualité du modèle étudiant et à présenter les résultats de manière claire. La performance du modèle surrogat n'est pas mesurée par rapport aux véritables étiquettes (qui ne sont pas forcément disponibles), mais par sa capacité à mimer le modèle professeur. Cette métrique est appelée la "fidélité". Nous la calculons comme le score d'accuracy entre les prédictions du modèle étudiant et les prédictions du modèle professeur. Un score de fidélité élevé indique que l'arbre de décision est une bonne approximation de la boîte noire sur les données fournies.\\
 
 Le principal résultat est la visualisation de l'arbre de décision lui-même. L'application génère un graphique représentant la structure complète de l'arbre. Chaque nœud affiche la condition de séparation, le nombre d'échantillons concernés et la classe majoritaire. Ce graphique constitue l'explication globale du comportement du modèle professeur. Il permet à un humain de suivre le cheminement logique qui mène à une décision, rendant ainsi le processus transparent.
 
@@ -268,15 +251,15 @@ Le principal résultat est la visualisation de l'arbre de décision lui-même. L
 \end{figure}
 
 
-\quad La Figure \ref{fig:race_distribution} illustre la répartition ethnique au sein du dataset. On observe une disparité notable : les prévenus afro-américains constituent le groupe le plus important avec 53,46\% des cas, suivis par les Caucasiens (33,23\%). Les autres groupes (Hispaniques, Asiatiques, Amérindiens et autres) sont nettement moins représentés.
+\quad La Figure \ref{fig:race_distribution} illustre la répartition ethnique au sein du dataset. On observe une disparité notable : les prévenus afro-américains constituent le groupe le plus important avec 53,46\% des cas, suivis par les Caucasiens (33,23\%). Les autres groupes (Hispaniques, Asiatiques, Amérindiens et autres) sont nettement moins représentés.\\
 
-\quad Il est crucial de noter que ces proportions reflètent la population carcérale d'une région spécifique des États-Unis et ne sauraient être généralisées. En France, par exemple, la collecte de données ethniques est interdite par la loi, ce qui rendrait une telle analyse impossible et souligne les différences de contexte légal et social. Cette forte disproportion dans les données d'entraînement constitue un risque majeur de voir les modèles développer des biais, en associant à tort l'ethnicité au risque de récidive.
+Il est crucial de noter que ces proportions reflètent la population carcérale d'une région spécifique des États-Unis et ne sauraient être généralisées. En France, par exemple, la collecte de données ethniques est interdite par la loi, ce qui rendrait une telle analyse impossible et souligne les différences de contexte légal et social. Cette forte disproportion dans les données d'entraînement constitue un risque majeur de voir les modèles développer des biais, en associant à tort l'ethnicité au risque de récidive.
 
 \subsection{Analyse des Biais via le Modèle Surrogat}
 
-\quad Après avoir entraîné deux modèles de classification complexes (un Gradient Boosting Classifier et un Perceptron Multicouche) pour prédire le score de risque (`score\_text`) sur le dataset COMPAS, nous les avons soumis à notre application. L'entraînement a été volontairement naïf, avec un prétraitement minimal, en utilisant les features `age`, `c\_charge\_degree`, `race`, `sex`, `priors\_count`, et `days\_b\_screening\_arrest`. L'objectif est de voir si notre approche par modèle surrogat (un arbre de décision) peut mettre en évidence des biais dans la logique de ces boîtes noires.
+\quad Après avoir entraîné deux modèles de classification complexes (un Gradient Boosting Classifier et un Perceptron Multicouche) pour prédire le score de risque (`score\_text`) sur le dataset COMPAS, nous les avons soumis à notre application. L'entraînement a été volontairement naïf, avec un prétraitement minimal, en utilisant les features `age`, `c\_charge\_degree`, `race`, `sex`, `priors\_count`, et `days\_b\_screening\_arrest`. L'objectif est de voir si notre approche par modèle surrogat (un arbre de décision) peut mettre en évidence des biais dans la logique de ces boîtes noires.\\
 
-\quad Notre première analyse consiste à générer un arbre de décision pour approximer notre modèle boîte noire en incluant toutes les features. Avec une profondeur limitée à 4 niveaux, nous obtenons une fidélité de \textbf{86\%} par rapport au modèle professeur. Comme le montre la Figure \ref{fig:tree_lvl4}, à ce niveau d'interprétation, le modèle surrogat base principalement ses décisions sur le nombre d'antécédents judiciaires (`priors\_count`) et l'âge (`age`). Jusqu'à cette profondeur, le facteur ethnique n'apparaît pas comme un critère de décision, suggérant que le raisonnement principal du modèle n'est pas directement raciste.
+Notre première analyse consiste à générer un arbre de décision pour approximer notre modèle boîte noire en incluant toutes les features. Avec une profondeur limitée à 4 niveaux, nous obtenons une fidélité de \textbf{86\%} par rapport au modèle professeur. Comme le montre la Figure \ref{fig:tree_lvl4}, à ce niveau d'interprétation, le modèle surrogat base principalement ses décisions sur le nombre d'antécédents judiciaires (`priors\_count`) et l'âge (`age`). Jusqu'à cette profondeur, le facteur ethnique n'apparaît pas comme un critère de décision, suggérant que le raisonnement principal du modèle n'est pas directement raciste.
 
 \begin{figure}[h!]
     \centering
@@ -287,9 +270,9 @@ Le principal résultat est la visualisation de l'arbre de décision lui-même. L
 
 \clearpage
 
-\quad Cependant, un compromis existe entre la fidélité et la simplicité. En cherchant à augmenter la fidélité de notre approximation, nous avons augmenté la profondeur de l'arbre. En passant à une profondeur de 5, la fidélité monte à \textbf{89\%}, mais des variables démographiques commencent à apparaître dans les décisions. Ce phénomène est problématique, car il montre que pour coller plus fidèlement à la logique de la boîte noire, le modèle simple doit commencer à intégrer des facteurs potentiellement biaisés.
+\quad Cependant, un compromis existe entre la fidélité et la simplicité. En cherchant à augmenter la fidélité de notre approximation, nous avons augmenté la profondeur de l'arbre. En passant à une profondeur de 5, la fidélité monte à \textbf{89\%}, mais des variables démographiques commencent à apparaître dans les décisions. Ce phénomène est problématique, car il montre que pour coller plus fidèlement à la logique de la boîte noire, le modèle simple doit commencer à intégrer des facteurs potentiellement biaisés.\\
 
-\quad Pour pousser l'analyse plus loin, nous avons mené une seconde expérience en retirant la variable la plus prédictive, `priors\_count`, et en ré-entraînant les modèles. Le résultat, visible sur la Figure \ref{fig:tree_without_prior}, est sans équivoque. Privé de son indicateur principal, le modèle surrogat utilise maintenant les variables ethniques comme `race\_African-American` dès le deuxième niveau de l'arbre. Ce comportement est très probablement dû au fort déséquilibre du jeu de données. Pour maximiser ses chances de prédire correctement, le modèle se base sur la majorité statistique, associant ainsi l'ethnie au risque.
+Pour pousser l'analyse plus loin, nous avons mené une seconde expérience en retirant la variable la plus prédictive, `priors\_count`, et en ré-entraînant les modèles. Le résultat, visible sur la Figure \ref{fig:tree_without_prior}, est sans équivoque. Privé de son indicateur principal, le modèle surrogat utilise maintenant les variables ethniques comme `race\_African-American` dès le deuxième niveau de l'arbre. Ce comportement est très probablement dû au fort déséquilibre du jeu de données. Pour maximiser ses chances de prédire correctement, le modèle se base sur la majorité statistique, associant ainsi l'ethnie au risque.
 
 \begin{figure}[h!]
     \centering
@@ -298,12 +281,11 @@ Le principal résultat est la visualisation de l'arbre de décision lui-même. L
     \label{fig:tree_without_prior}
 \end{figure}
 
-\quad Cela prouve-t-il que le modèle est intrinsèquement raciste ? Pour le vérifier, nous avons mené un test final : ré-entraîner les modèles boîte noire originaux (Gradient Boosting et MLP) sur le jeu de données complet, mais en excluant totalement la feature `race`. De manière surprenante, les performances (accuracy, précision, rappel) de ces modèles sont restées identiques.
+\quad Cela prouve-t-il que le modèle est intrinsèquement raciste ? Pour le vérifier, nous avons mené un test final : ré-entraîner les modèles boîte noire originaux (Gradient Boosting et MLP) sur le jeu de données complet, mais en excluant totalement la feature `race`. De manière surprenante, les performances (accuracy, précision, rappel) de ces modèles sont restées identiques.\\
 
-\quad Cette dernière étape nous amène à une conclusion nuancée. Bien que le modèle puisse s'appuyer sur des biais ethniques lorsque des données plus pertinentes sont absentes ou lorsqu'on le pousse à une fidélité extrême, le facteur `race` semble être décorrélé de sa performance globale. Le modèle n'a pas besoin de l'ethnie pour effectuer ses prédictions. Le modèle n'a pas établi de lien de cause à effet, mais a détecté que cette information est statistiquement liée au résultat. Il l'utilise donc comme un substitut pratique pour prendre sa décision, surtout en l'absence de données plus directes. 
+Cette dernière étape nous amène à une conclusion nuancée. Bien que le modèle puisse s'appuyer sur des biais ethniques lorsque des données plus pertinentes sont absentes ou lorsqu'on le pousse à une fidélité extrême, le facteur `race` semble être décorrélé de sa performance globale. Le modèle n'a pas besoin de l'ethnie pour effectuer ses prédictions. Le modèle n'a pas établi de lien de cause à effet, mais a détecté que cette information est statistiquement liée au résultat. Il l'utilise donc comme un substitut pratique pour prendre sa décision, surtout en l'absence de données plus directes.\\
 
 Notre outil permet donc non seulement de détecter un biais potentiel, mais aussi d'évaluer sa réelle importance dans la logique du modèle, offrant ainsi une vision plus juste et approfondie que la simple accusation de "biais raciste".
-
 
 \clearpage
 
