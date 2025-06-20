@@ -1,70 +1,102 @@
-# Application d'Interprétabilité de Modèles par Distillation
+# GlassBoxAI : Distillation de Modèles "Boîte Noire"
 
-## 🎯 Objectif
+GlassBoxAI est une application web interactive conçue pour rendre les modèles de Machine Learning opaques (boîtes noires) plus interprétables. L'outil implémente une technique de **distillation de modèle** où un modèle simple et intelligible (un "étudiant", comme un arbre de décision) est entraîné pour imiter le comportement d'un modèle complexe (le "professeur").
 
-Cette application web, développée avec Streamlit, a pour but de rendre les modèles de Machine Learning complexes (souvent appelés "boîtes noires") plus compréhensibles. Pour ce faire, elle utilise une technique d'**interprétabilité appelée distillation de connaissances**. L'idée est d'entraîner un modèle plus simple et intrinsèquement interprétable (le "modèle étudiant") pour imiter le comportement d'un modèle "boîte noire" pré-entraîné (le "modèle professeur").
+L'objectif est de fournir une explication globale et visuelle de la logique d'une boîte noire sur un jeu de données spécifique, facilitant ainsi l'audit, la détection de biais et la confiance dans les systèmes d'IA.
 
-Actuellement, l'application se concentre sur :
-* L'utilisation d'un modèle classifieur scikit-learn compatible en tant que modèle professeur.
-* L'entraînement d'un **Arbre de Décision (DecisionTreeClassifier)** comme modèle étudiant.
+## Fonctionnalités
 
-## ✨ Fonctionnalités Principales
+  * **Upload facile :** Chargez votre modèle boîte noire pré-entraîné (`.joblib`) et votre jeu de données (`.csv`).
+  * **Contrôle interactif :** Ajustez dynamiquement la complexité (profondeur) de l'arbre de décision étudiant pour trouver le bon équilibre entre fidélité et simplicité.
+  * **Évaluation de la fidélité :** Calculez instantanément à quel point le modèle étudiant parvient à imiter le modèle professeur.
+  * **Visualisation intuitive :** Obtenez une représentation graphique claire de l'arbre de décision, rendant la logique du modèle transparente.
 
-* **Téléversement Facile** :
-    * Chargez votre propre modèle professeur scikit-learn au format `.joblib`.
-    * Chargez votre jeu de données (features uniquement) au format `.csv` sur lequel le modèle professeur a été entraîné ou peut faire des prédictions.
-* **Processus de Distillation** :
-    * Le modèle professeur génère des prédictions (étiquettes) sur les données fournies.
-    * Un modèle Arbre de Décision étudiant est ensuite entraîné en utilisant ces prédictions comme cibles.
-* **Évaluation de la Fidélité** :
-    * Mesurez à quel point le modèle étudiant parvient à imiter les prédictions du modèle professeur grâce à un score d'accuracy (fidélité).
-* **Visualisation Interprétable** :
-    * Visualisez l'Arbre de Décision étudiant résultant, vous permettant de comprendre les règles de décision qu'il a apprises.
-* **Interface Utilisateur Intuitive** :
-    * Une interface simple et conviviale construite avec Streamlit, permettant d'ajuster certains paramètres comme la profondeur maximale de l'arbre étudiant.
-* **Téléchargement des Modèles** :
-    * Téléchargez le modèle étudiant entraîné et les prédictions du modèle professeur pour une utilisation ultérieure.
+## Démonstration de l'application
 
-## 🤔 Pourquoi la Distillation ?
+Le processus se déroule en trois étapes simples guidées par l'interface.
 
-Les modèles modernes de Machine Learning (par exemple, les forêts aléatoires, les réseaux de neurones profonds) peuvent atteindre des performances très élevées, mais leur complexité interne les rend difficiles à interpréter. Comprendre *pourquoi* un modèle prend une décision particulière est crucial dans de nombreux domaines (santé, finance, justice).
+#### Étape 1 : Accueil et Configuration
+L'utilisateur est accueilli par une interface sobre expliquant le but de l'application. Le panneau latéral permet de charger le modèle "professeur" (`.joblib`) et le jeu de données (`.csv`).
 
-La distillation de connaissances permet de :
-1.  Créer une **approximation simplifiée** du modèle complexe.
-2.  Obtenir un **modèle interprétable** qui, s'il est suffisamment fidèle, peut donner des indications sur le fonctionnement du modèle original.
-3.  Déployer potentiellement un modèle plus léger (l'étudiant) si sa performance est acceptable.
+![Interface de démarrage de GlassBoxAI](Rapport/app_start.png)
 
-## 🛠️ Technologies Utilisées
+#### Étape 2 : Contrôle et Paramètres
+Une fois les fichiers chargés, l'utilisateur peut interagir avec les paramètres du modèle "étudiant" pour ajuster la complexité de l'interprétation, notamment via un curseur pour la profondeur de l'arbre.
 
-* **Python** : Langage de programmation principal.
-* **Streamlit** : Framework pour la création rapide d'applications web pour la data science.
-* **Scikit-learn** : Bibliothèque pour le Machine Learning (modèles, métriques).
-* **Pandas** : Bibliothèque pour la manipulation et l'analyse de données.
-* **Joblib** : Pour la sérialisation/désérialisation des modèles scikit-learn.
-* **Matplotlib** : Pour la création de visualisations (notamment l'arbre de décision).
+![Panneau de configuration latéral](Rapport/app_lateral.png)
 
-## 🚀 Comment Lancer l'Application
+#### Étape 3 : Visualisation et Interprétation
+Après l'entraînement, l'application affiche la fidélité du modèle étudiant et, surtout, la visualisation complète de l'arbre de décision. Chaque nœud et chaque feuille peuvent être inspectés pour comprendre la logique capturée par le modèle.
 
-1.  **Prérequis** :
-    * Assurez-vous d'avoir Python (3.7+ recommandé) et pip installés.
+![Visualisation du résultat avec l'arbre de décision](Rapport/app_tree.png)
 
+### Exemple Simple : Le Dataset Iris
 
-    * Placez le fichier `app_distillation.py` (et potentiellement les fichiers d'exemple `teacher_model.joblib` et `sample_features.csv`) dans un répertoire de projet.
-    *  **Installer les Dépendances** :
+Pour illustrer la clarté du résultat, voici un arbre de décision généré par l'application pour le célèbre dataset Iris. On peut suivre distinctement les règles qui permettent de séparer les différentes espèces de fleurs en se basant sur la longueur et la largeur de leurs pétales.
+
+![Arbre de décision pour le dataset Iris](Rapport/tree_with_iris.png)
+
+## Étude de Cas : Analyse de Biais du Dataset COMPAS
+
+Avant d'analyser les biais du modèle, il est essentiel de comprendre la composition du dataset COMPAS. Les graphiques ci-dessous, générés en amont de l'analyse, montrent une population carcérale majoritairement jeune et une forte surreprésentation des prévenus afro-américains, ce qui constitue un risque de biais pour l'entraînement.
+
+<table align="center">
+  <tr valign="top">
+    <td align="center">
+      <b>Distribution de l'âge des prévenus</b><br>
+      <img src="Rapport/plot_age.png" width="350">
+    </td>
+    <td align="center">
+      <b>Répartition des cas par sexe et âge</b><br>
+      <img src="Rapport/plot_sexe.png" width="420">
+    </td>
+  </tr>
+</table>
+
+Nous avons utilisé cet outil pour analyser les biais potentiels d'un modèle entraîné sur le célèbre dataset **COMPAS**. L'objectif était de vérifier si l'ethnie était un facteur de décision important.
+
+#### Analyse avec toutes les features
+
+Avec une fidélité de 86%, le modèle se base principalement sur le nombre d'antécédents (`priors_count`) et l'âge, sans faire apparaître l'ethnie dans les premiers niveaux de décision.
+
+#### Analyse sans `priors_count`
+
+En retirant la variable la plus prédictive (`priors_count`), l'arbre surrogat montre que le modèle utilise alors l'ethnie (`race_African-American`) comme un critère de décision de haut niveau, probablement en raison du déséquilibre statistique dans les données.
+
+Cette étude de cas montre comment l'outil peut être utilisé pour l'audit d'équité et l'analyse fine du comportement d'un modèle.
+
+## Technologies Utilisées
+
+Ce projet est construit avec les technologies suivantes :
+
+  * **Python** pour le développement backend
+  * **Streamlit** pour l'interface web interactive 
+  * **Scikit-learn** pour l'entraînement des modèles de Machine Learning 
+  * **Pandas** pour la manipulation des données 
+  * **Matplotlib** pour la visualisation des graphiques 
+  * **Joblib** pour le chargement des modèles pré-entraînés 
+
+## Installation et Lancement
+
+Pour lancer l'application sur votre machine locale, suivez ces étapes :
+
+1.  **Clonez le dépôt :**
 
     ```bash
-    pip install streamlit pandas scikit-learn joblib matplotlib
+    git clone https://github.com/MathisAulagnier/Interpr-table_ML
+    cd INTERPR-TABLE_ML
     ```
 
-4.  **Préparer vos Fichiers (Optionnel - pour tester avec les exemples)** :
-    * Un **modèle professeur** au format `.joblib` (ex: `teacher_model.joblib`). Ce modèle doit être un classifieur scikit-learn entraîné.
-    * Un **fichier CSV de features** (ex: `sample_features.csv`). Ce fichier doit contenir les colonnes de features que votre modèle professeur attend, sans la colonne cible originale.
+2.  **Créez un environnement virtuel et activez-le :**
 
-    *Vous pouvez générer des fichiers d'exemple en utilisant le script `create_teacher_model.py`.*
+3.  **Installez les dépendances :**
 
-5.  **Exécuter l'Application Streamlit** :
-    Toujours dans le terminal, à la racine de votre projet, lancez :
     ```bash
-    streamlit run app_distillation.py
+    pip install -r requirements.txt
     ```
-    L'application devrait s'ouvrir automatiquement dans votre navigateur web par défaut.
+
+4.  **Lancez l'application Streamlit :**
+
+    ```bash
+    streamlit run app.py
+    ```
